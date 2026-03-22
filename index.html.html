@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORBIT DIAGRAM</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d12;overflow:hidden;width:100vw;height:100vh;font-family:'Share Tech Mono',monospace}
+canvas{position:absolute;top:0;left:0;display:block}
+
+#ui{
+  position:absolute;bottom:0;left:0;right:0;z-index:20;
+  padding:10px 16px 10px;
+  background:rgba(5,5,11,0.94);
+  border-top:1px solid rgba(255,255,255,0.055);
+  display:flex;flex-direction:column;gap:8px;
+}
+.ui-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+
+.col{display:flex;flex-direction:column;gap:4px}
+.ptitle{
+  font-size:7.5px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:1px;
+}
+.seg-row{display:flex;gap:3px;flex-wrap:wrap}
+.seg{
+  font-family:'Share Tech Mono',monospace;
+  font-size:8.5px;letter-spacing:.06em;
+  padding:3px 8px;border:1px solid rgba(255,255,255,.12);
+  background:transparent;color:rgba(255,255,255,.38);
+  cursor:pointer;transition:all .12s;border-radius:1px;white-space:nowrap;
+}
+.seg:hover{color:rgba(255,255,255,.72);border-color:rgba(255,255,255,.28)}
+.seg.on{background:rgba(255,255,255,.05);border-color:var(--ac);color:var(--ac)}
+
+.txt-field{
+  background:transparent;border:none;
+  border-bottom:1px solid rgba(255,255,255,.1);
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;padding:2px 0;outline:none;
+  width:120px;letter-spacing:.08em;
+}
+.txt-field::placeholder{color:rgba(255,255,255,.1)}
+.txt-field.tc{color:rgba(62,201,232,.85)}
+.txt-field.ta{color:rgba(240,80,80,.8)}
+.txt-field.tb{color:rgba(240,210,60,.85)}
+.txt-field.td{color:rgba(200,200,200,.7)}
+
+.divv{width:1px;background:rgba(255,255,255,.06);margin:0 1px;align-self:stretch}
+
+.btn{
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.1em;
+  padding:5px 11px;cursor:pointer;border:1px solid rgba(255,255,255,.13);
+  background:transparent;color:rgba(255,255,255,.4);border-radius:1px;
+  transition:all .13s;white-space:nowrap;
+}
+.btn:hover{color:#fff;border-color:rgba(255,255,255,.38)}
+.btn.on{color:#e84040;border-color:#e84040}
+
+#hud{
+  position:absolute;top:13px;left:16px;z-index:20;
+  font-size:8px;letter-spacing:.14em;color:rgba(255,255,255,.14);
+  pointer-events:none;line-height:2;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">ORBIT DIAGRAM GENERATOR<br><span id="st">READY</span></div>
+
+<div id="ui">
+
+  <!-- Row 1: A B C parameters -->
+  <div class="ui-row">
+
+    <!-- A: STRUCTURE -->
+    <div class="col">
+      <div class="ptitle" style="color:rgba(62,201,232,.5)">A · STRUCTURE</div>
+      <div class="seg-row" id="grpA">
+        <button class="seg on" style="--ac:#3ec9e8" data-v="loop"     onclick="pick('A',this)">LOOP</button>
+        <button class="seg"    style="--ac:#3ec9e8" data-v="orbit"    onclick="pick('A',this)">ORBIT</button>
+        <button class="seg"    style="--ac:#3ec9e8" data-v="circuit"  onclick="pick('A',this)">CIRCUIT</button>
+        <button class="seg"    style="--ac:#3ec9e8" data-v="helix"    onclick="pick('A',this)">HELIX</button>
+        <button class="seg"    style="--ac:#3ec9e8" data-v="saturn"   onclick="pick('A',this)">SATURN</button>
+        <button class="seg"    style="--ac:#3ec9e8" data-v="figure8"  onclick="pick('A',this)">FIGURE-8</button>
+      </div>
+    </div>
+
+    <div class="divv"></div>
+
+    <!-- B: INNER FORM -->
+    <div class="col">
+      <div class="ptitle" style="color:rgba(240,210,60,.5)">B · INNER FORM</div>
+      <div class="seg-row" id="grpB">
+        <button class="seg on" style="--ac:#f0d23c" data-v="contour"  onclick="pick('B',this)">CONTOUR</button>
+        <button class="seg"    style="--ac:#f0d23c" data-v="arches"   onclick="pick('B',this)">ARCHES</button>
+        <button class="seg"    style="--ac:#f0d23c" data-v="spokes"   onclick="pick('B',this)">SPOKES</button>
+        <button class="seg"    style="--ac:#f0d23c" data-v="spiral"   onclick="pick('B',this)">SPIRAL</button>
+        <button class="seg"    style="--ac:#f0d23c" data-v="fan"      onclick="pick('B',this)">FAN</button>
+        <button class="seg"    style="--ac:#f0d23c" data-v="ripple"   onclick="pick('B',this)">RIPPLE</button>
+      </div>
+    </div>
+
+    <div class="divv"></div>
+
+    <!-- C: DETAIL -->
+    <div class="col">
+      <div class="ptitle" style="color:rgba(232,80,80,.5)">C · DETAIL</div>
+      <div class="seg-row" id="grpC">
+        <button class="seg on" style="--ac:#e85050" data-v="dotfield" onclick="pick('C',this)">DOT FIELD</button>
+        <button class="seg"    style="--ac:#e85050" data-v="wave"     onclick="pick('C',this)">WAVE TAIL</button>
+        <button class="seg"    style="--ac:#e85050" data-v="curl"     onclick="pick('C',this)">CURL</button>
+        <button class="seg"    style="--ac:#e85050" data-v="nodes"    onclick="pick('C',this)">NODES</button>
+        <button class="seg"    style="--ac:#e85050" data-v="scatter"  onclick="pick('C',this)">SCATTER</button>
+        <button class="seg"    style="--ac:#e85050" data-v="dashes"   onclick="pick('C',this)">DASHES</button>
+      </div>
+    </div>
+
+    <div class="divv"></div>
+
+    <!-- Speed -->
+    <div class="col">
+      <div class="ptitle">SPEED</div>
+      <input type="range" id="spdR" min="1" max="8" value="3" style="width:70px;accent-color:#3ec9e8;margin-top:6px">
+    </div>
+
+    <div class="divv"></div>
+
+    <!-- Action buttons -->
+    <div class="col" style="flex-direction:row;align-items:flex-end;gap:5px">
+      <button class="btn" onclick="generate()">GENERATE</button>
+      <button class="btn" id="autoBtn" onclick="toggleAuto()">▶ AUTO</button>
+      <button class="btn" onclick="wipe()">CLEAR</button>
+    </div>
+
+  </div>
+
+  <!-- Row 2: Text fields -->
+  <div class="ui-row" style="gap:10px;padding-bottom:2px">
+    <div class="col">
+      <div class="ptitle" style="color:rgba(62,201,232,.4)">CENTER TEXT</div>
+      <input class="txt-field tc" id="t1" value="COSMOS" placeholder="中央テキスト…" maxlength="16">
+    </div>
+    <div class="col">
+      <div class="ptitle" style="color:rgba(240,80,80,.4)">AXIS LABEL</div>
+      <input class="txt-field ta" id="t2" value="ORIGIN" placeholder="軸ラベル…" maxlength="14">
+    </div>
+    <div class="col">
+      <div class="ptitle" style="color:rgba(240,210,60,.4)">ORBIT LABEL</div>
+      <input class="txt-field tb" id="t3" value="CURIOSITY TO EXPLORE" placeholder="軌道ラベル…" maxlength="28">
+    </div>
+    <div class="col">
+      <div class="ptitle" style="color:rgba(200,200,200,.3)">ZONE LABEL</div>
+      <input class="txt-field td" id="t4" value="COMFORT ZONE" placeholder="ゾーンラベル…" maxlength="20">
+    </div>
+  </div>
+
+</div><!-- /ui -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// CANVAS
+// ═══════════════════════════════════════════════════
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H,CX,CY;
+function resize(){
+  W=canvas.width=window.innerWidth;
+  H=canvas.height=window.innerHeight;
+  CX=W/2; CY=H/2;
+}
+window.addEventListener('resize',resize);
+resize();
+
+const PI=Math.PI, TAU=PI*2;
+
+// ═══════════════════════════════════════════════════
+// PALETTE
+// ═══════════════════════════════════════════════════
+const CLR={
+  ax:'#e84040', blue:'#3ec9e8', yel:'#f0d23c',
+  grn:'#80d840', pink:'#f080c0', white:'#d0d0d0',
+  dot:'rgba(170,150,195,0.4)', ora:'#f09040',
+  pur:'#a060e8', teal:'#40d8a0',
+};
+
+// ═══════════════════════════════════════════════════
+// PRIMITIVES
+// ═══════════════════════════════════════════════════
+function ptE(ox,oy,rx,ry,tilt,a){
+  const c=Math.cos(tilt),s=Math.sin(tilt),xe=rx*Math.cos(a),ye=ry*Math.sin(a);
+  return{x:ox+xe*c-ye*s,y:oy+xe*s+ye*c};
+}
+function ePts(ox,oy,rx,ry,tilt,a0,a1,n){
+  const pts=[];
+  for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;pts.push(ptE(ox,oy,rx,ry,tilt,a));}
+  return pts;
+}
+function stroke(pts,col,lw,alpha,dash){
+  if(!pts||pts.length<2)return;
+  ctx.save();ctx.globalAlpha=alpha??1;ctx.strokeStyle=col;
+  ctx.lineWidth=lw??1.5;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.setLineDash(dash??[]);
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length-1;i++){
+    const mx=(pts[i].x+pts[i+1].x)/2,my=(pts[i].y+pts[i+1].y)/2;
+    ctx.quadraticCurveTo(pts[i].x,pts[i].y,mx,my);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pts[pts.length-1].y);
+  ctx.stroke();ctx.setLineDash([]);ctx.restore();
+}
+function sArc(ox,oy,rx,ry,tilt,a0,a1,col,lw,alpha,dash,n){
+  stroke(ePts(ox,oy,rx,ry,tilt,a0,a1,n??80),col,lw,alpha,dash);
+}
+function dot(x,y,r,col,alpha){
+  ctx.save();ctx.globalAlpha=alpha??1;ctx.fillStyle=col;
+  ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.restore();
+}
+function endDot(x,y,r,col,fill){
+  ctx.save();ctx.globalAlpha=1;ctx.strokeStyle=col;ctx.lineWidth=1.5;
+  ctx.fillStyle=fill??col;ctx.beginPath();ctx.arc(x,y,r,0,TAU);
+  ctx.fill();ctx.stroke();ctx.restore();
+}
+function xMark(x,y,sz,col,alpha){
+  ctx.save();ctx.globalAlpha=alpha??0.6;ctx.strokeStyle=col;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x-sz,y-sz);ctx.lineTo(x+sz,y+sz);
+  ctx.moveTo(x+sz,y-sz);ctx.lineTo(x-sz,y+sz);ctx.stroke();ctx.restore();
+}
+function plusMark(x,y,sz,col,alpha){
+  ctx.save();ctx.globalAlpha=alpha??0.6;ctx.strokeStyle=col;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x,y-sz);ctx.lineTo(x,y+sz);
+  ctx.moveTo(x-sz,y);ctx.lineTo(x+sz,y);ctx.stroke();ctx.restore();
+}
+function lbl(txt,x,y,col,sz,alpha){
+  if(!txt)return;
+  ctx.save();ctx.globalAlpha=alpha??0.3;ctx.fillStyle=col;
+  ctx.font=`${sz??8}px 'Share Tech Mono'`;ctx.fillText(txt,x,y);ctx.restore();
+}
+function curvedLbl(txt,ox,oy,r,startA,col,sz,alpha,spacing){
+  if(!txt)return;
+  ctx.save();ctx.globalAlpha=alpha??0.28;ctx.fillStyle=col;
+  ctx.font=`${sz??7.5}px 'Share Tech Mono'`;
+  const sp=spacing??0.013;
+  for(let i=0;i<txt.length;i++){
+    const a=startA+i*sp;
+    ctx.save();ctx.translate(ox+Math.cos(a)*r,oy+Math.sin(a)*r);
+    ctx.rotate(a+PI/2);ctx.fillText(txt[i],0,0);ctx.restore();
+  }
+  ctx.restore();
+}
+function sl(pts,p){return pts.slice(0,Math.max(2,Math.floor(pts.length*Math.min(p,1))));}
+
+// ═══════════════════════════════════════════════════
+// TEXT INPUTS
+// ═══════════════════════════════════════════════════
+function T1(){return(document.getElementById('t1').value||'').toUpperCase();}
+function T2(){return(document.getElementById('t2').value||'').toUpperCase();}
+function T3(){return(document.getElementById('t3').value||'').toUpperCase();}
+function T4(){return(document.getElementById('t4').value||'').toUpperCase();}
+
+// ═══════════════════════════════════════════════════
+// AXIS (always drawn)
+// ═══════════════════════════════════════════════════
+function drawAxis(p,x0mul,x1mul){
+  const R=Math.min(W,H)*.38;
+  const x0=CX+R*(x0mul??-1.22), x1=CX+R*(x1mul??1.38);
+  const pts=[];for(let i=0;i<=80;i++)pts.push({x:x0+(x1-x0)*i/80,y:CY});
+  stroke(sl(pts,p),CLR.ax,1.4,1);
+  if(p>.02)endDot(x0,CY,5,CLR.ax,CLR.ax);
+  if(p>.98)endDot(x1,CY,5,CLR.ax,CLR.ax);
+  // axis label
+  const t2=T2();
+  if(t2&&p>.9)lbl(t2,x0+6,CY-10,CLR.ax,8,.55);
+}
+
+// ═══════════════════════════════════════════════════
+// A · STRUCTURE  (6 options)
+// ═══════════════════════════════════════════════════
+
+// A1: LOOP — large D-loop teardrop (Image 1)
+function A_loop(p){
+  const R=Math.min(W,H)*.38;
+  // Dotted zone circle left
+  sArc(CX-R*.45,CY,R*.68,R*.68,0,-PI*.05,PI*1.98,CLR.white,.8,.22,[3,5],120);
+  const t4=T4();
+  if(t4&&p>.85){
+    lbl('DANGER ZONE',CX-R*.7,CY-R*.72,CLR.white,8,.35);
+    lbl(t4,          CX-R*.65,CY-R*.6, CLR.white,8,.3);
+    // arrow
+    ctx.save();ctx.strokeStyle=CLR.white;ctx.lineWidth=.8;ctx.globalAlpha=.28;
+    ctx.beginPath();ctx.moveTo(CX-R*.45,CY-R*.74);ctx.lineTo(CX-R*.45,CY-R*.72);
+    ctx.moveTo(CX-R*.45,CY-R*.5);ctx.lineTo(CX-R*.45,CY-R*.58);ctx.stroke();ctx.restore();
+  }
+  // Main blue D-loop
+  const tdPts=[];
+  for(let i=0;i<=200;i++){
+    const a=(i/200)*TAU;
+    const rx=R*.82,ry=R*.46;
+    const r=rx*(0.55+0.52*Math.cos(a+PI));
+    tdPts.push({x:CX-R*.05+r*Math.cos(a+PI)*.82,y:CY+Math.sin(a)*ry});
+  }
+  stroke(sl(tdPts,Math.min(p/.7,1)),CLR.blue,2.2,1);
+  // Yellow inner loop
+  const ylPts=[];
+  for(let i=0;i<=160;i++){
+    const a=(i/160)*TAU;
+    const rx=R*.3,ry=R*.22;
+    const r=rx*(0.5+0.52*Math.cos(a+PI));
+    ylPts.push({x:CX+R*.28+r*Math.cos(a+PI)*.85,y:CY+R*.05+Math.sin(a)*ry});
+  }
+  stroke(sl(ylPts,Math.max(0,Math.min((p-.2)/.6,1))),CLR.yel,2.0,1);
+  // Curved orbit label
+  const t3=T3();
+  if(t3&&p>.75)curvedLbl(t3,CX,CY,R*.75,PI*.12,CLR.blue,7.5,.4,.013);
+}
+
+// A2: ORBIT — two large crossing tilted ellipses (Image 3)
+function A_orbit(p){
+  const R=Math.min(W,H)*.38;
+  sArc(CX+R*.18,CY,R*.72,R*.52,-.22,0,TAU,CLR.blue,2.2,1,[],150);
+  sArc(CX+R*.18,CY,R*.5,R*.78,.28,0,TAU,CLR.blue,2.2,Math.min(p/.8+.2,1),[],150);
+  // small tail loop right
+  sArc(CX+R*1.12,CY,R*.14,R*.14,0,-PI*.5,PI*.5,CLR.yel,1.5,Math.max(0,p-.7),[],40);
+}
+
+// A3: CIRCUIT — outer irregular loop (Image 4)
+function A_circuit(p){
+  const R=Math.min(W,H)*.38;
+  const pts=[];
+  for(let i=0;i<=320;i++){
+    const t=i/320,a=t*TAU;
+    const rad=R*(1.0+.08*Math.cos(3*a)+.06*Math.sin(5*a+.3)-.12*(a>PI*1.1&&a<PI*1.6?1:0));
+    pts.push({x:CX+Math.cos(a)*rad,y:CY+Math.sin(a)*rad*.96});
+  }
+  const g1=Math.floor(320*.41),g2=Math.floor(320*.48);
+  stroke(sl(pts.slice(0,g1),Math.min(p/.5,1)),CLR.blue,2.0,1);
+  stroke(sl(pts.slice(g2),Math.max(0,(p-.45)/.55)),CLR.blue,2.0,1);
+  // exit semicircle right
+  sArc(CX+R*1.08,CY,R*.28,R*.28,0,-PI*.5,PI*.5,CLR.blue,1.8,Math.max(0,(p-.6)/.4),[],50);
+  const t4=T4();
+  if(p>.85){
+    curvedLbl(T3()||'QUESTION THE IDEA',CX+R*.08,CY-R*.02,R*1.05,-PI*.55,CLR.white,7.5,.32,.013);
+    if(t4)curvedLbl(t4,CX+R*.08,CY+R*.02,R*1.05,PI*.38,CLR.white,7.5,.3,.013);
+  }
+}
+
+// A4: HELIX — DNA-style double helix along axis
+function A_helix(p){
+  const R=Math.min(W,H)*.38;
+  const N=200;
+  // two strands
+  [[0,CLR.blue],[PI,CLR.yel]].forEach(([off,col])=>{
+    const pts=[];
+    for(let i=0;i<=N;i++){
+      const t=i/N,x=CX-R*.9+t*R*1.8;
+      const y=CY+Math.sin(t*PI*6+off)*R*.28;
+      pts.push({x,y});
+    }
+    stroke(sl(pts,p),col,1.8,1);
+  });
+  // connecting rungs
+  const rungs=14;
+  for(let i=0;i<rungs;i++){
+    const t=(i+.5)/rungs,x=CX-R*.9+t*R*1.8;
+    const y0=CY+Math.sin(t*PI*6)*R*.28;
+    const y1=CY+Math.sin(t*PI*6+PI)*R*.28;
+    if(p>t*.8)stroke([{x,y:y0},{x,y:y1}],CLR.white,.7,.3);
+    if(p>t*.8)dot(x,y0,3,CLR.blue,.9);
+    if(p>t*.8)dot(x,y1,3,CLR.yel,.9);
+  }
+}
+
+// A5: SATURN — stacked tilted rings
+function A_saturn(p){
+  const R=Math.min(W,H)*.38;
+  const N=8;
+  const cols=[CLR.blue,CLR.yel,CLR.grn,CLR.pink,CLR.pur,CLR.teal,CLR.ora,CLR.white];
+  for(let i=0;i<N;i++){
+    const f=(i+1)/(N+1);
+    const tilt=-.4+i*.12;
+    const rx=R*(f*.85+.06),ry=R*(f*.15+.03);
+    sArc(CX,CY,rx,ry,tilt,0,TAU,cols[i],1.0+i*.08,.4+i*.04,[],120);
+  }
+}
+
+// A6: FIGURE-8 — lemniscate / figure-8 main loop
+function A_figure8(p){
+  const R=Math.min(W,H)*.38;
+  // Lemniscate of Bernoulli
+  const pts=[];
+  for(let i=0;i<=300;i++){
+    const t=(i/300)*TAU;
+    const d=1+Math.sin(t)*Math.sin(t);
+    const r=R*.7*Math.sqrt(Math.abs(Math.cos(2*t)));
+    const sign=Math.cos(2*t)>=0?1:-1;
+    if(sign<0){pts.push(null);continue;}
+    pts.push({x:CX+r*Math.cos(t),y:CY+r*Math.sin(t)*.62});
+  }
+  // draw segments, skipping nulls
+  let seg=[];
+  pts.forEach(pt=>{
+    if(pt){seg.push(pt);}else{stroke(sl(seg,p),CLR.blue,2.2,1);seg=[];}
+  });
+  if(seg.length)stroke(sl(seg,p),CLR.blue,2.2,1);
+  // second lemniscate offset
+  const pts2=[];
+  for(let i=0;i<=300;i++){
+    const t=(i/300)*TAU;
+    if(Math.cos(2*t)<0){pts2.push(null);continue;}
+    const r=R*.5*Math.sqrt(Math.abs(Math.cos(2*t)));
+    pts2.push({x:CX+r*Math.cos(t+.3),y:CY+r*Math.sin(t+.3)*.55});
+  }
+  let seg2=[];
+  pts2.forEach(pt=>{
+    if(pt){seg2.push(pt);}else{stroke(sl(seg2,Math.max(0,p-.15)),CLR.yel,1.6,.9);seg2=[];}
+  });
+  if(seg2.length)stroke(sl(seg2,Math.max(0,p-.15)),CLR.yel,1.6,.9);
+}
+
+// ═══════════════════════════════════════════════════
+// B · INNER FORM  (6 options)
+// ═══════════════════════════════════════════════════
+
+// B1: CONTOUR — nested loop contours (Image 1 right fan)
+function B_contour(p){
+  const R=Math.min(W,H)*.38;
+  const N=11;
+  for(let i=0;i<N;i++){
+    const f=(i+1)/(N+1);
+    const pp=Math.max(0,(p-.1)*1.3-i*.07);
+    if(pp<=0)continue;
+    sArc(CX+R*.42,CY,R*(f*.55+.04),R*(f*.3+.02),-.05+i*.02,0,TAU,CLR.white,.7,.1+f*.18,[3,4],100);
+  }
+}
+
+// B2: ARCHES — rainbow arch stack (Image 2 center)
+function B_arches(p){
+  const R=Math.min(W,H)*.38;
+  const cols=[CLR.ax,'#f07030',CLR.yel,'#a0d820',CLR.grn,'#38c8b8',CLR.blue,'#6880f0',CLR.pink];
+  cols.forEach((col,i)=>{
+    const f=(i+1)/(cols.length+1);
+    const pp=Math.max(0,(p-.05)*1.4-i*.08);
+    if(pp<=0)return;
+    sArc(CX-R*.05,CY+R*.05,R*(f*.48+.06),R*(f*.32+.04),0,PI*.05,PI*.95,col,1.2,.75,[],60);
+    lbl(`${i+1}`,CX-R*.05+R*(f*.48+.06)*.98,CY+R*.05,col,7,.45*Math.min(pp,1));
+  });
+}
+
+// B3: SPOKES — radial spokes from anchor (Image 3)
+function B_spokes(p){
+  const R=Math.min(W,H)*.38;
+  const N=14;
+  const cols=[CLR.yel,CLR.grn,CLR.grn,'#c0f040',CLR.teal,CLR.blue,CLR.blue,'#8040f0',CLR.pink,CLR.ora,CLR.yel,CLR.grn,CLR.teal,CLR.pur];
+  for(let i=0;i<N;i++){
+    const a=-PI*.38+(i/N)*PI*1.12;
+    const r=R*(.1+Math.sin(i/N*PI)*.58);
+    const pp=Math.max(0,(p-.05)*1.3-i*.06);
+    if(pp<=0)continue;
+    const x1=CX+Math.cos(a)*r*pp,y1=CY+Math.sin(a)*r*.6*pp;
+    stroke([{x:CX,y:CY},{x:x1,y:y1}],cols[i%cols.length],1.2,.78);
+  }
+  // anchor circle
+  if(p>.4){
+    ctx.save();ctx.globalAlpha=.7;ctx.strokeStyle=CLR.yel;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(CX,CY,8,0,TAU);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(CX,CY-5);ctx.lineTo(CX,CY+5);
+    ctx.moveTo(CX-5,CY+3);ctx.lineTo(CX+5,CY+3);ctx.stroke();ctx.restore();
+  }
+}
+
+// B4: SPIRAL — tight Archimedean spiral
+function B_spiral(p){
+  const R=Math.min(W,H)*.38;
+  // main spiral
+  const pts=[];
+  const turns=5,N=300;
+  for(let i=0;i<=N;i++){
+    const t=i/N,a=t*TAU*turns,r=t*R*.5;
+    pts.push({x:CX+Math.cos(a)*r,y:CY+Math.sin(a)*r*.65});
+  }
+  stroke(sl(pts,p),CLR.blue,1.4,.8);
+  // second offset spiral
+  const pts2=[];
+  for(let i=0;i<=N;i++){
+    const t=i/N,a=t*TAU*turns+PI*.4,r=t*R*.42;
+    pts2.push({x:CX+Math.cos(a)*r,y:CY+Math.sin(a)*r*.65});
+  }
+  stroke(sl(pts2,Math.max(0,p-.1)),CLR.yel,1.0,.65);
+}
+
+// B5: FAN — radiating fan of dotted lines (like projection lines)
+function B_fan(p){
+  const R=Math.min(W,H)*.38;
+  const N=16;
+  const ox=CX+R*.08,oy=CY;
+  for(let i=0;i<N;i++){
+    const a=-PI*.55+(i/N)*PI*1.1;
+    const r=R*(.12+i/N*.7);
+    const pp=Math.max(0,(p-.05)*1.4-i*.05);
+    if(pp<=0)continue;
+    const x1=ox+Math.cos(a)*r*pp,y1=oy+Math.sin(a)*r*.55*pp;
+    stroke([{x:ox,y:oy},{x:x1,y:y1}],CLR.white,.7,.22,[2,3]);
+    // arrow hint at tip
+    if(pp>.8)lbl('←',x1-4,y1+3,CLR.white,8,.35);
+  }
+}
+
+// B6: RIPPLE — concentric ripple rings emanating from point
+function B_ripple(p){
+  const R=Math.min(W,H)*.38;
+  const N=10;
+  const ox=CX+R*.12,oy=CY;
+  for(let i=0;i<N;i++){
+    const f=(i+1)/N;
+    const pp=Math.max(0,(p-.05)*1.5-i*.09);
+    if(pp<=0)continue;
+    const r=R*f*.7;
+    sArc(ox,oy,r,r*.5,0,0,TAU,CLR.blue,1.0,.18+f*.2,[],90);
+    // wave on ring
+    const wPts=[];
+    for(let j=0;j<=60;j++){
+      const a=(j/60)*TAU;
+      const wave=Math.sin(a*4)*R*.018;
+      wPts.push({x:ox+Math.cos(a)*(r+wave),y:oy+Math.sin(a)*(r+wave)*.5});
+    }
+    stroke(sl(wPts,pp),CLR.teal,.7,.3);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// C · DETAIL  (6 options)
+// ═══════════════════════════════════════════════════
+
+// C1: DOTFIELD — radial dot cloud + stars
+function C_dotfield(p){
+  const R=Math.min(W,H)*.38;
+  if(p<.3)return;
+  const f=Math.min((p-.3)/.5,1);
+  const total=200;
+  for(let i=0;i<Math.floor(total*f);i++){
+    const a=(i/total)*TAU+.4,r=R*(.08+Math.pow(i/total,.6)*.9);
+    dot(CX+Math.cos(a)*r*.9,CY+Math.sin(a)*r*.72,.8+Math.random()*1.4,CLR.dot,.55);
+  }
+  // yellow star-dots
+  for(let i=0;i<Math.floor(18*f);i++){
+    const a=(i/18)*TAU,R2=R*(.5+.2*Math.sin(i*1.7));
+    dot(CX+R*.18+Math.cos(a)*R2*.8,CY+Math.sin(a)*R2*.65,2.5+Math.random()*1.8,CLR.yel,.88);
+    if(i%3===0){
+      const sx=CX+R*.18+Math.cos(a)*R2*.8,sy=CY+Math.sin(a)*R2*.65;
+      ctx.save();ctx.strokeStyle=CLR.yel;ctx.lineWidth=.7;ctx.globalAlpha=.5;
+      for(let k=0;k<4;k++){
+        const ka=k/4*TAU;
+        ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(ka)*5,sy+Math.sin(ka)*5);ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+}
+
+// C2: WAVE TAIL — sine-wave decorated arc (Image 2 bottom)
+function C_wave(p){
+  const R=Math.min(W,H)*.38;
+  if(p<.25)return;
+  const f=Math.min((p-.25)/.55,1);
+  [[0,CLR.pink,1.1],[R*.02,CLR.yel,1.0]].forEach(([off,col,lw])=>{
+    const pts=[];
+    for(let i=0;i<=200;i++){
+      const t=i/200,a=PI*.1+t*PI*1.1,wave=Math.sin(t*PI*(10+off*5))*R*.022;
+      pts.push({x:CX+Math.cos(a)*(R*1.02+wave),y:CY+Math.sin(a)*(R*1.02+wave)});
+    }
+    stroke(sl(pts,f),col,lw,.65);
+  });
+}
+
+// C3: CURL — escape spiral curl (Image 1 top-right)
+function C_curl(p){
+  const R=Math.min(W,H)*.38;
+  if(p<.35)return;
+  const f=Math.min((p-.35)/.5,1);
+  // pink curl
+  const pts=[];
+  for(let i=0;i<=120;i++){
+    const t=i/120,a=t*PI*2.5,r=R*(.28-.22*t);
+    pts.push({x:CX+R*.72+Math.cos(a+PI*.6)*r,y:CY-R*.52+Math.sin(a+PI*.6)*r*.85-t*R*.12});
+  }
+  stroke(sl(pts,f),CLR.pink,1.5,.85);
+  if(f>.9){
+    const tip=pts[pts.length-1];
+    dot(tip.x,tip.y,4,CLR.pink,.9);
+    ctx.save();ctx.strokeStyle=CLR.pink;ctx.lineWidth=1.2;ctx.globalAlpha=.65;
+    ctx.beginPath();ctx.arc(tip.x,tip.y,6,-PI*.3,PI*.8);ctx.stroke();ctx.restore();
+  }
+  // dotted approach spirals left
+  for(let i=0;i<8;i++){
+    const sp=Math.max(0,f*1.5-i*.18);
+    if(sp<=0)continue;
+    sArc(CX-R*.35,CY,R*(.12+i*.1),R*(.06+i*.06),-.1,-PI*.7,PI*.5,CLR.white,.7,.16+i*.02,[4,5],50);
+    if(sp>.5)lbl('←',CX-R*.35+R*(.12+i*.1)+2,CY+3,CLR.white,8,.28);
+  }
+}
+
+// C4: NODES — circuit-board nodes with circles and lines
+function C_nodes(p){
+  const R=Math.min(W,H)*.38;
+  if(p<.3)return;
+  const f=Math.min((p-.3)/.6,1);
+  const nodeData=[
+    {x:CX-R*.7,y:CY+R*.6,col:CLR.white},{x:CX+R*.3,y:CY+R*.72,col:CLR.yel},
+    {x:CX+R*.75,y:CY+R*.35,col:CLR.white},{x:CX+R*.9,y:CY-R*.1,col:CLR.grn},
+    {x:CX+R*.22,y:CY-R*.7,col:CLR.white},{x:CX-R*.4,y:CY-R*.6,col:CLR.pink},
+  ];
+  nodeData.forEach(({x,y,col},i)=>{
+    if(f<i/nodeData.length)return;
+    xMark(x,y,6,col,.65);
+    endDot(x,y,7,col,'transparent');
+    // small connected lines
+    if(i>0){
+      const prev=nodeData[i-1];
+      stroke([{x:prev.x,y:prev.y},{x,y}],CLR.white,.6,.2,[4,6]);
+    }
+  });
+  // labels near nodes
+  if(p>.85){
+    nodeData.forEach(({x,y,col},i)=>{
+      lbl(`NODE·0${i+1}`,x+9,y-4,col,7,.4);
+    });
+  }
+}
+
+// C5: SCATTER — scattered small dots in organic clusters
+function C_scatter(p){
+  const R=Math.min(W,H)*.38;
+  if(p<.28)return;
+  const f=Math.min((p-.28)/.5,1);
+  const clusters=[
+    {ox:CX+R*.5,oy:CY-R*.4,r:R*.28,col:CLR.dot},
+    {ox:CX+R*.7,oy:CY+R*.3,r:R*.22,col:'rgba(80,200,130,0.35)'},
+    {ox:CX-R*.3,oy:CY+R*.45,r:R*.2,col:'rgba(200,130,80,0.3)'},
+    {ox:CX+R*.1, oy:CY-R*.6,r:R*.18,col:CLR.dot},
+  ];
+  clusters.forEach(({ox,oy,r,col})=>{
+    const n=Math.floor(40*f);
+    for(let i=0;i<n;i++){
+      const a=Math.random()*TAU,rr=Math.random()*r;
+      dot(ox+Math.cos(a)*rr,oy+Math.sin(a)*rr*.8,Math.random()*2+.5,col,1);
+    }
+  });
+}
+
+// C6: DASHES — dashed orbit rings + sequential tick marks
+function C_dashes(p){
+  const R=Math.min(W,H)*.38;
+  if(p<.25)return;
+  const f=Math.min((p-.25)/.6,1);
+  // dashed rings
+  [.7,.88,1.05].forEach((rf,i)=>{
+    sArc(CX,CY,R*rf,R*rf*.55,0,0,TAU,CLR.white,.8,.2+i*.05,[4,7],100);
+  });
+  // tick marks on outer ring
+  const ticks=24;
+  for(let i=0;i<Math.floor(ticks*f);i++){
+    const a=(i/ticks)*TAU;
+    const r=R*1.05,len=i%6===0?14:7;
+    const x0=CX+Math.cos(a)*r,y0=CY+Math.sin(a)*r*.55;
+    const x1=CX+Math.cos(a)*(r+len),y1=CY+Math.sin(a)*(r+len)*.55;
+    stroke([{x:x0,y:y0},{x:x1,y:y1}],CLR.white,.8,.35+.2*(i%6===0?1:0));
+    if(i%6===0)lbl(`${Math.round(i/ticks*360)}°`,x1+3,y1+3,CLR.white,7,.28);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// SPECIAL COMBINATIONS (exact Image reproductions)
+// ═══════════════════════════════════════════════════
+function combo_orbitArches(p){
+  const R=Math.min(W,H)*.38;
+  // 3-line bundle C-arc
+  [[0,CLR.blue],[4,CLR.yel],[8,CLR.pink]].forEach(([off,col])=>{
+    const pts=[];
+    for(let i=0;i<=200;i++){
+      const t=i/200,a=-PI*.82+t*PI*1.78,r=R*(1.0+off*.0015);
+      pts.push({x:CX+Math.cos(a)*r,y:CY+Math.sin(a)*r+off*(t<.5?t:1-t)*1.2});
+    }
+    stroke(sl(pts,p),col,2.0,1);
+  });
+  B_arches(p);
+  C_wave(p);
+  drawAxis(p);
+  C_curl(p);
+  // markers
+  if(p>.5){
+    xMark(CX-R*.88,CY-.02*R,8,CLR.white,.6);
+    endDot(CX-R*.12,CY,8,CLR.white,'transparent');
+    lbl('×',CX-R*.17,CY+4,CLR.white,13,.55);
+    endDot(CX+R*.55,CY,8,CLR.white,'transparent');
+    plusMark(CX+R*.55,CY,5,CLR.white,.7);
+    endDot(CX+R*1.02,CY,5,CLR.ax,CLR.ax);
+    const t3=T3();
+    lbl(t3||'IMPLEMENT',CX+R*.68,CY-R*.18,CLR.white,8,.35);
+  }
+  if(p>.75){
+    xMark(CX+R*.12,CY-R*.92,7,CLR.white,.65);
+    plusMark(CX+R*.12,CY-R*.92,7,CLR.white,.65);
+    curvedLbl(T4()||'COME OUT FROM THE OTHER SIDE',CX+R*.22,CY-R*.88,R,-.08,CLR.white,7.5,.3,.013);
+  }
+  dot(CX,CY,4,'#ffffff',1);endDot(CX-R*1.2,CY,5,CLR.ax,CLR.ax);
+}
+
+function combo_orbitSpokes(p){
+  const R=Math.min(W,H)*.38;
+  // Wing contours
+  const N=14;
+  for(let i=0;i<N;i++){
+    const f=(i+1)/(N+1);
+    const pp=Math.max(0,(p-.05)*1.4-i*.07);
+    if(pp<=0)continue;
+    sArc(CX-R*.58,CY-R*.04,R*(f*.6+.03),R*(f*.32+.02)*.7,-.5,0,TAU,CLR.white,.65,.1+f*.1,[],90);
+  }
+  for(let i=0;i<5;i++){
+    const yOff=(i-2)*R*.07;
+    const pp=Math.max(0,(p-.2)*1.5-i*.08);
+    if(pp<=0)continue;
+    const wPts=[];
+    for(let j=0;j<=80;j++){
+      const t=j/80,x=CX-R*.9+t*R*.55;
+      wPts.push({x,y:CY+yOff+Math.sin(t*PI*6+i)*R*.03});
+    }
+    stroke(sl(wPts,pp),CLR.white,.6,.25);
+    [.2,.5,.8].forEach(tf=>{
+      const tp=wPts[Math.floor(tf*80)];
+      if(tp&&pp>.5)dot(tp.x,tp.y,1.8,i%2===0?CLR.grn:CLR.pink,.7);
+    });
+  }
+  if(p>.8){
+    lbl('DATA',CX-R*.35,CY-R*.72,CLR.white,8,.35);
+    lbl('RESEARCH',CX-R*.68,CY-R*.48,CLR.white,8,.3);
+    lbl(T3()||'PREVIOUS PROJECTS',CX-R*.88,CY-R*.18,CLR.white,8,.28);
+    lbl(T4()||'CURRENT PROJECTS', CX-R*.82,CY+R*.1, CLR.white,8,.28);
+    lbl('INSIGHTS',CX-R*.65,CY+R*.52,CLR.white,8,.3);
+  }
+  A_orbit(p);
+  B_spokes(p);
+  C_dotfield(p);
+  drawAxis(p);
+  endDot(CX-R*1.2,CY,5,CLR.ax,CLR.ax);endDot(CX+R*1.35,CY,5,CLR.ax,CLR.ax);
+}
+
+function combo_circuitContour(p){
+  const R=Math.min(W,H)*.38;
+  A_circuit(p);
+  for(let i=0;i<7;i++){
+    const r=R*(.1+i*.09);
+    sArc(CX,CY,r,r,0,-PI*.5,PI*1.1,CLR.blue,1.0,.32+i*.06,[],80);
+  }
+  for(let i=0;i<4;i++){
+    const r=R*(.08+i*.08);
+    sArc(CX-R*.05,CY,r,r,0,-PI*.4,PI*.55,CLR.grn,.9,.4+i*.08,[],60);
+  }
+  if(p>.7){
+    lbl('research',CX-R*.36,CY-R*.05,CLR.white,7,.3);
+    lbl('write',   CX-R*.22,CY-R*.1, CLR.white,7,.3);
+    lbl('sketch',  CX-R*.08,CY-R*.14,CLR.white,7,.3);
+    lbl('read',    CX+R*.08,CY-R*.12,CLR.white,7,.3);
+  }
+  // pie markers
+  if(p>.8){
+    [[-R*.76,R*.22],[R*.52,R*.62]].forEach(([dx,dy])=>{
+      ctx.save();ctx.globalAlpha=.65;ctx.fillStyle='#5860a8';
+      ctx.beginPath();ctx.moveTo(CX+dx,CY+dy);ctx.arc(CX+dx,CY+dy,13,-PI*.5,PI*.5);
+      ctx.closePath();ctx.fill();ctx.restore();
+    });
+  }
+  drawAxis(p,-0.6,1.0);
+  endDot(CX-R*.6,CY,5,CLR.ax,CLR.ax);endDot(CX+R*1.0,CY,5,CLR.ax,CLR.ax);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function render(p){
+  const A=params.A,B=params.B,C=params.C;
+  const R=Math.min(W,H)*.38;
+
+  ctx.fillStyle='#0d0d12';ctx.fillRect(0,0,W,H);
+
+  // Special combos
+  if(A==='orbit'&&B==='arches'){combo_orbitArches(p);return;}
+  if(A==='orbit'&&B==='spokes'){combo_orbitSpokes(p);return;}
+  if(A==='circuit'&&B==='contour'){combo_circuitContour(p);return;}
+
+  // Generic layering
+  drawAxis(p);
+
+  // A
+  ({loop:A_loop,orbit:A_orbit,circuit:A_circuit,helix:A_helix,saturn:A_saturn,figure8:A_figure8}[A]||A_loop)(p);
+  // B
+  ({contour:B_contour,arches:B_arches,spokes:B_spokes,spiral:B_spiral,fan:B_fan,ripple:B_ripple}[B]||B_contour)(p);
+  // C
+  ({dotfield:C_dotfield,wave:C_wave,curl:C_curl,nodes:C_nodes,scatter:C_scatter,dashes:C_dashes}[C]||C_dotfield)(p);
+
+  // Center dot + axis endpoints
+  dot(CX,CY,4,'#ffffff',1);
+  endDot(CX-R*1.22,CY,5,CLR.ax,CLR.ax);
+
+  // ── Text layers ──
+  // T1: center ghost text
+  const t1=T1();
+  if(t1&&p>.7){
+    ctx.save();ctx.globalAlpha=.11;ctx.fillStyle=CLR.white;
+    ctx.font=`300 ${Math.min(W,H)*.05}px 'Share Tech Mono'`;
+    ctx.fillText(t1,CX-ctx.measureText(t1).width/2,CY+Math.min(W,H)*.025);
+    ctx.restore();
+  }
+  // T3: curved orbit label
+  const t3=T3();
+  if(t3&&p>.82)curvedLbl(t3,CX,CY,R*.78,PI*.15,CLR.blue,7.5,.38,.013);
+  // T4: zone label (upper left)
+  const t4=T4();
+  if(t4&&p>.88)lbl(t4,CX-R*.78,CY-R*.55,CLR.white,8,.32);
+}
+
+// ═══════════════════════════════════════════════════
+// LOOP + STATE
+// ═══════════════════════════════════════════════════
+let T=0,progress=0,drawing=false;
+let params={A:'loop',B:'contour',C:'dotfield'};
+let autoMode=false,autoTimer=null;
+
+function loop(){
+  requestAnimationFrame(loop);
+  const spd=+(document.getElementById('spdR')?.value??3);
+  if(drawing){
+    progress=Math.min(progress+.004*spd,1);
+    document.getElementById('st').textContent=
+      progress>=1?(drawing=false,'LIVE'):`DRAWING ${Math.floor(progress*100)}%`;
+  }
+  render(progress);
+}
+
+function pick(group,btn){
+  document.querySelectorAll(`#grp${group} .seg`).forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  params[group]=btn.dataset.v;
+}
+function generate(){progress=0;drawing=true;document.getElementById('st').textContent='GENERATING';}
+function wipe(){
+  progress=0;drawing=false;
+  ctx.fillStyle='#0d0d12';ctx.fillRect(0,0,W,H);
+  document.getElementById('st').textContent='CLEARED';
+}
+function toggleAuto(){
+  autoMode=!autoMode;
+  const btn=document.getElementById('autoBtn');
+  if(autoMode){
+    btn.textContent='⏹ STOP';btn.classList.add('on');
+    const seq=[
+      {A:'loop',    B:'contour', C:'dotfield'},
+      {A:'orbit',   B:'arches',  C:'wave'},
+      {A:'orbit',   B:'spokes',  C:'dotfield'},
+      {A:'circuit', B:'contour', C:'curl'},
+      {A:'helix',   B:'spiral',  C:'dashes'},
+      {A:'saturn',  B:'fan',     C:'scatter'},
+      {A:'figure8', B:'ripple',  C:'nodes'},
+      {A:'loop',    B:'arches',  C:'curl'},
+      {A:'circuit', B:'spokes',  C:'wave'},
+      {A:'helix',   B:'fan',     C:'dotfield'},
+      {A:'saturn',  B:'contour', C:'dashes'},
+      {A:'figure8', B:'spokes',  C:'scatter'},
+    ];
+    let i=0;
+    function next(){
+      if(!autoMode)return;
+      const s=seq[i%seq.length];
+      params=s;
+      ['A','B','C'].forEach(g=>{
+        document.querySelectorAll(`#grp${g} .seg`).forEach(b=>{
+          b.classList.toggle('on',b.dataset.v===s[g]);
+        });
+      });
+      generate();i++;
+      autoTimer=setTimeout(next,9500);
+    }
+    next();
+  }else{
+    btn.textContent='▶ AUTO';btn.classList.remove('on');
+    clearTimeout(autoTimer);
+  }
+}
+
+['t1','t2','t3','t4'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')generate();});
+});
+
+loop();generate();
+</script>
+</body>
+</html>
